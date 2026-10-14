@@ -28,6 +28,15 @@
     <ul id="activity-list" class="activity-list"></ul>
     <p id="empty" class="empty" hidden>No activities yet. Add one below. For example: “Read Kindle, 2 hours”.</p>
 
+    <section class="tasks">
+      <h2>Tasks for this week</h2>
+      <ul id="task-list" class="task-list"></ul>
+      <form id="task-form" class="row">
+        <input id="task-text" placeholder="One-off task (e.g. Clean the bookshelf)" required maxlength="80" aria-label="New task">
+        <button type="submit">Add</button>
+      </form>
+    </section>
+
     <form id="add-form" class="add-form">
       <h2>Add a weekly goal</h2>
       <input id="name" placeholder="Activity (e.g. Read a book)" required maxlength="60">

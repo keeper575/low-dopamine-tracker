@@ -4,6 +4,8 @@ A small weekly tracker for healthy, low-dopamine activities, such as reading a K
 
 - Add a weekly goal with a target and a unit (hours, minutes, pages, times, km).
 - Log progress through the week and watch the bar fill.
+- Edit a goal to change its name, target or unit. The new target applies to every week, past weeks included.
+- Add one-off tasks to a week's checklist and tick them off.
 - Move between weeks to see past ones. Each week starts on Monday.
 - Export and import your data as JSON.
 
