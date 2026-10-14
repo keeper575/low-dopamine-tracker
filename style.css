@@ -79,6 +79,8 @@ button[type="submit"], .primary { background: var(--accent); border-color: var(-
 .task { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .task label { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; }
 .task input { width: 18px; height: 18px; accent-color: var(--accent); }
+.carry { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+.carried { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
 .task.done span { color: var(--muted); text-decoration: line-through; }
 
 .empty { color: var(--muted); text-align: center; }

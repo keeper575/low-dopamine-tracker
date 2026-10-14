@@ -6,6 +6,7 @@ A small weekly tracker for healthy, low-dopamine activities, such as reading a K
 - Log progress through the week: **Add** puts an amount on top of the week's total, **Set total** replaces it (use 0 to clear the week).
 - Edit a goal to change its name, target or unit. The new target applies to every week, past weeks included.
 - Add one-off tasks to a week's checklist and tick them off.
+- Nothing unfinished gets lost. An unticked task moves on to the next week (marked "from Oct 5") until you tick it. If you fall short on a goal, the missing amount is added to next week's target, and keeps rolling forward until you catch up. For example, 30 of 50 pages means next week's target is 70.
 - Move between weeks to see past ones. Each week starts on Monday.
 - Export and import your data as JSON.
 

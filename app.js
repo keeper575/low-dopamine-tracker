@@ -1,9 +1,14 @@
 // Slow Week: all state lives in localStorage under one key.
-// Shape: {
-//   activities: [{ id, name, target, unit }],
-//   logs:  { "YYYY-MM-DD" (week's Monday): { [activityId]: amount } },
-//   tasks: { "YYYY-MM-DD" (week's Monday): [{ id, text, done }] },
+// Shape (weeks are keyed by their Monday, "YYYY-MM-DD"):
+// {
+//   activities: [{ id, name, target, unit, since }],  // since: first week the goal counts
+//   logs:  { [week]: { [activityId]: amount } },
+//   tasks: [{ id, text, week, doneWeek }],            // week added; doneWeek is null until ticked
 // }
+//
+// Carry-over: a goal's target for a week is its base target plus whatever is still owed from
+// earlier weeks, so a shortfall keeps rolling forward until it is made up. A task shows in every
+// week from the one it was added until the one it was ticked in.
 
 // ?demo runs on separate storage seeded with sample data, so trying things out never touches real data.
 const DEMO = new URLSearchParams(location.search).has('demo');
@@ -28,18 +33,35 @@ function demoData() {
   const lastWeek = weekKey(addDays(mondayOf(new Date()), -7));
   return normalize({
     activities: [
-      { id: 'kindle', name: 'Read Kindle', target: 2, unit: 'hours' },
-      { id: 'pages', name: 'Read a book', target: 50, unit: 'pages' },
-      { id: 'walk', name: 'Walk outside', target: 10, unit: 'km' },
-      { id: 'sudoku', name: 'Sudoku', target: 5, unit: 'puzzles' },
+      { id: 'kindle', name: 'Read Kindle', target: 2, unit: 'hours', since: lastWeek },
+      { id: 'pages', name: 'Read a book', target: 50, unit: 'pages', since: lastWeek },
+      { id: 'walk', name: 'Walk outside', target: 10, unit: 'km', since: lastWeek },
+      { id: 'sudoku', name: 'Sudoku', target: 5, unit: 'puzzles', since: week },
     ],
     logs: { [week]: { kindle: 1.5, pages: 50, walk: 4, sudoku: 2 }, [lastWeek]: { kindle: 2, pages: 30, walk: 12 } },
-    tasks: { [week]: [{ id: 't1', text: 'Clean the bookshelf', done: true }, { id: 't2', text: 'Call grandma', done: false }] },
+    tasks: [
+      { id: 't1', text: 'Clean the bookshelf', week, doneWeek: week },
+      { id: 't2', text: 'Call grandma', week, doneWeek: null },
+      { id: 't3', text: 'Return library books', week: lastWeek, doneWeek: null },
+    ],
   });
 }
 
+// Also upgrades older saves: goals get a start week, and per-week task lists become one list.
 function normalize(data) {
-  return { activities: data.activities, logs: data.logs || {}, tasks: data.tasks || {} };
+  const logs = data.logs || {};
+  const thisWeek = weekKey(mondayOf(new Date()));
+  const activities = data.activities.map((a) => {
+    if (a.since) return a;
+    const logged = Object.keys(logs).filter((w) => logs[w][a.id] != null).sort();
+    return { ...a, since: logged[0] || thisWeek };
+  });
+  let tasks = data.tasks || [];
+  if (!Array.isArray(tasks)) {
+    tasks = Object.entries(tasks).flatMap(([week, list]) =>
+      list.map((t) => ({ id: t.id, text: t.text, week, doneWeek: t.done ? week : null })));
+  }
+  return { activities, logs, tasks };
 }
 
 function save() {
@@ -65,6 +87,15 @@ function weekKey(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
+function parseKey(key) {
+  const [y, m, d] = key.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function shortDate(key) {
+  return parseKey(key).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 function weekLabel(start) {
   const fmt = { month: 'short', day: 'numeric' };
   return `${start.toLocaleDateString(undefined, fmt)} – ${addDays(start, 6).toLocaleDateString(undefined, fmt)}`;
@@ -72,8 +103,22 @@ function weekLabel(start) {
 
 // --- logs ----------------------------------------------------------------
 
+function amountIn(week, activityId) {
+  return state.logs[week]?.[activityId] || 0;
+}
+
 function getAmount(activityId) {
-  return state.logs[weekKey(weekStart)]?.[activityId] || 0;
+  return amountIn(weekKey(weekStart), activityId);
+}
+
+// Amount still owed from weeks before `week`. Doing more than a week's target pays the backlog
+// down, but never builds up credit for later weeks.
+function carriedInto(activity, week) {
+  let owed = 0;
+  for (let d = parseKey(activity.since); weekKey(d) < week; d = addDays(d, 7)) {
+    owed = Math.max(0, activity.target + owed - amountIn(weekKey(d), activity.id));
+  }
+  return Math.round(owed * 100) / 100;
 }
 
 function setAmount(activityId, amount) {
@@ -87,14 +132,12 @@ function setAmount(activityId, amount) {
 // --- tasks ---------------------------------------------------------------
 
 function weekTasks() {
-  return state.tasks[weekKey(weekStart)] || [];
+  const week = weekKey(weekStart);
+  return state.tasks.filter((t) => t.week <= week && (t.doneWeek == null || t.doneWeek >= week));
 }
 
-function updateTasks(fn) {
-  const key = weekKey(weekStart);
-  const tasks = fn(weekTasks());
-  if (tasks.length) state.tasks[key] = tasks;
-  else delete state.tasks[key];
+function updateTask(id, changes) {
+  state.tasks = state.tasks.flatMap((t) => (t.id !== id ? [t] : changes ? [{ ...t, ...changes }] : []));
   save();
   render();
 }
@@ -110,9 +153,10 @@ function render() {
   list.replaceChildren(...state.activities.map(renderActivity));
   $('empty').hidden = state.activities.length > 0;
 
-  const done = state.activities.filter((a) => getAmount(a.id) >= a.target).length;
+  const week = weekKey(weekStart);
+  const done = state.activities.filter((a) => getAmount(a.id) >= a.target + carriedInto(a, week)).length;
   const tasks = weekTasks();
-  const tasksDone = tasks.filter((t) => t.done).length;
+  const tasksDone = tasks.filter((t) => t.doneWeek === week).length;
   $('summary').textContent = [
     state.activities.length && `${done} of ${state.activities.length} goals met`,
     tasks.length && `${tasksDone} of ${tasks.length} tasks done`,
@@ -122,33 +166,37 @@ function render() {
 }
 
 function renderTask(task) {
+  const week = weekKey(weekStart);
+  const done = task.doneWeek === week;
   const li = document.createElement('li');
-  li.className = 'task' + (task.done ? ' done' : '');
+  li.className = 'task' + (done ? ' done' : '');
   li.innerHTML = `
-    <label><input type="checkbox"><span></span></label>
+    <label><input type="checkbox"><span></span><small class="carried"></small></label>
     <button type="button" class="link remove">Remove</button>`;
   li.querySelector('span').textContent = task.text;
+  if (task.week < week) li.querySelector('.carried').textContent = `from ${shortDate(task.week)}`;
   const box = li.querySelector('input');
-  box.checked = task.done;
-  box.addEventListener('change', () =>
-    updateTasks((tasks) => tasks.map((t) => (t.id === task.id ? { ...t, done: box.checked } : t))));
-  li.querySelector('.remove').addEventListener('click', () =>
-    updateTasks((tasks) => tasks.filter((t) => t.id !== task.id)));
+  box.checked = done;
+  box.addEventListener('change', () => updateTask(task.id, { doneWeek: box.checked ? week : null }));
+  li.querySelector('.remove').addEventListener('click', () => updateTask(task.id, null));
   return li;
 }
 
 function renderActivity(activity) {
   if (activity.id === editingId) return renderEditor(activity);
   const amount = getAmount(activity.id);
-  const pct = Math.min(100, (amount / activity.target) * 100);
+  const carried = carriedInto(activity, weekKey(weekStart));
+  const target = activity.target + carried;
+  const pct = Math.min(100, (amount / target) * 100);
 
   const li = document.createElement('li');
-  li.className = 'activity' + (amount >= activity.target ? ' done' : '');
+  li.className = 'activity' + (amount >= target ? ' done' : '');
   li.innerHTML = `
     <div class="activity-head">
       <span class="activity-name"></span>
       <span class="activity-count"></span>
     </div>
+    <div class="carry" hidden></div>
     <div class="bar"><span style="width:${pct}%"></span></div>
     <form class="log">
       <input type="number" step="any" min="0" aria-label="Amount">
@@ -158,7 +206,12 @@ function renderActivity(activity) {
       <button type="button" class="link remove">Remove</button>
     </form>`;
   li.querySelector('.activity-name').textContent = activity.name;
-  li.querySelector('.activity-count').textContent = `${amount} / ${activity.target} ${activity.unit}`;
+  li.querySelector('.activity-count').textContent = `${amount} / ${target} ${activity.unit}`;
+  if (carried) {
+    const note = li.querySelector('.carry');
+    note.hidden = false;
+    note.textContent = `${activity.target} this week + ${carried} carried over`;
+  }
 
   // "Add" logs a session on top of the week's total; "Set total" overwrites it (0 clears the week).
   const form = li.querySelector('form');
@@ -228,6 +281,7 @@ $('add-form').addEventListener('submit', (e) => {
     name: $('name').value.trim(),
     target: parseFloat($('target').value),
     unit: $('unit').value.trim(),
+    since: weekKey(weekStart),
   });
   save();
   e.target.reset();
@@ -248,7 +302,9 @@ $('task-form').addEventListener('submit', (e) => {
   e.preventDefault();
   const text = $('task-text').value.trim();
   if (!text) return;
-  updateTasks((tasks) => [...tasks, { id: crypto.randomUUID(), text, done: false }]);
+  state.tasks.push({ id: crypto.randomUUID(), text, week: weekKey(weekStart), doneWeek: null });
+  save();
+  render();
   e.target.reset();
 });
 
