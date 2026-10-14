@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Slow Week</title>
+  <meta name="description" content="Weekly tracker for healthy, low-dopamine activities.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Slow Week</h1>
+      <p class="sub">Healthy, low-dopamine goals, one week at a time.</p>
+    </header>
+
+    <nav class="week-nav">
+      <button id="prev-week" aria-label="Previous week">&larr;</button>
+      <div>
+        <div id="week-label" class="week-label"></div>
+        <button id="this-week" class="link">Back to this week</button>
+      </div>
+      <button id="next-week" aria-label="Next week">&rarr;</button>
+    </nav>
+
+    <section id="summary" class="summary"></section>
+
+    <ul id="activity-list" class="activity-list"></ul>
+    <p id="empty" class="empty" hidden>No activities yet. Add one below. For example: “Read Kindle, 2 hours”.</p>
+
+    <form id="add-form" class="add-form">
+      <h2>Add a weekly goal</h2>
+      <input id="name" placeholder="Activity (e.g. Read a book)" required maxlength="60">
+      <div class="row">
+        <input id="target" type="number" min="0.25" step="any" placeholder="Target" required>
+        <select id="unit">
+          <option value="hours">hours</option>
+          <option value="minutes">minutes</option>
+          <option value="pages">pages</option>
+          <option value="times">times</option>
+          <option value="km">km</option>
+        </select>
+        <button type="submit">Add</button>
+      </div>
+    </form>
+
+    <footer>
+      <button id="export" class="link">Export data</button>
+      <label class="link">Import data<input id="import" type="file" accept="application/json" hidden></label>
+      <span class="muted">Saved in this browser only.</span>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
