@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Slow Week</title>
   <meta name="description" content="Weekly tracker for healthy, low-dopamine activities.">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
   <main>
@@ -44,22 +44,23 @@
       </form>
     </section>
 
-    <button id="show-add" class="add-toggle">+ Add a weekly goal</button>
-    <form id="add-form" class="add-form" hidden>
-      <h2>Add a weekly goal</h2>
-      <input id="name" placeholder="Activity (e.g. Read a book)" required maxlength="60">
-      <div class="row">
-        <input id="target" type="number" min="0.25" step="any" placeholder="Target" required>
-        <input id="unit" placeholder="Unit" required maxlength="20" list="unit-suggestions">
-        <datalist id="unit-suggestions">
-          <option value="hours"><option value="minutes"><option value="pages">
-          <option value="times"><option value="km"><option value="sessions">
-        </datalist>
-        <button type="submit">Add</button>
-        <button type="button" id="hide-add">Cancel</button>
-      </div>
-      <p class="hint">Any unit works: 2 hours, 50 pages, 5 sudokus.</p>
-    </form>
+    <details id="add-goal" class="add-goal">
+      <summary>+ Add a weekly goal</summary>
+      <form id="add-form" class="add-form">
+        <input id="name" placeholder="Activity (e.g. Read a book)" required maxlength="60">
+        <div class="row">
+          <input id="target" type="number" min="0.25" step="any" placeholder="Target" required>
+          <input id="unit" placeholder="Unit" required maxlength="20" list="unit-suggestions">
+          <datalist id="unit-suggestions">
+            <option value="hours"><option value="minutes"><option value="pages">
+            <option value="times"><option value="km"><option value="sessions">
+          </datalist>
+          <button type="submit">Add</button>
+          <button type="button" id="hide-add">Cancel</button>
+        </div>
+        <p class="hint">Any unit works: 2 hours, 50 pages, 5 sudokus.</p>
+      </form>
+    </details>
 
     <footer>
       <button id="export" class="link">Export data</button>
@@ -69,6 +70,6 @@
     </footer>
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=4"></script>
 </body>
 </html>

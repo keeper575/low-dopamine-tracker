@@ -289,13 +289,12 @@ $('add-form').addEventListener('submit', (e) => {
   render();
 });
 
+// The form sits in a <details>, so it opens and closes even if this script fails to load.
 function toggleAddForm(open) {
-  $('add-form').hidden = !open;
-  $('show-add').hidden = open;
-  if (open) $('name').focus();
+  $('add-goal').open = open;
 }
 
-$('show-add').addEventListener('click', () => toggleAddForm(true));
+$('add-goal').addEventListener('toggle', () => { if ($('add-goal').open) $('name').focus(); });
 $('hide-add').addEventListener('click', () => { $('add-form').reset(); toggleAddForm(false); });
 
 $('task-form').addEventListener('submit', (e) => {

@@ -34,6 +34,8 @@ Add `?demo` to the URL, or click **Try demo** at the bottom of the page. Demo mo
 
 ## Deploy (GitHub Pages)
 
+When you change `style.css` or `app.js`, bump the `?v=` number on their links in `index.html`. Browsers cache these files for a few minutes, and the new number makes them fetch the update instead of mixing an old file with a new page.
+
 1. Push this repo to GitHub.
 2. Go to **Settings → Pages**, set the source to **Deploy from a branch**, then choose `main` and `/ (root)`.
 3. The site is published at `https://<username>.github.io/low-dopamine-tracker/`.

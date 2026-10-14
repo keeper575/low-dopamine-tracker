@@ -85,10 +85,12 @@ button[type="submit"], .primary { background: var(--accent); border-color: var(-
 
 .empty { color: var(--muted); text-align: center; }
 
-.add-toggle { width: 100%; border-style: dashed; color: var(--muted); padding: 12px; }
+.add-goal > summary { list-style: none; cursor: pointer; text-align: center; color: var(--muted); background: var(--card); border: 1px dashed var(--border); border-radius: 8px; padding: 12px; }
+.add-goal > summary::-webkit-details-marker { display: none; }
+.add-goal[open] { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.add-goal[open] > summary { border: none; padding: 0 0 12px; text-align: left; font-weight: 600; color: var(--text); }
 .hint { margin: 8px 0 0; color: var(--muted); font-size: 0.85rem; }
 
-.add-form { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 .add-form > input { width: 100%; margin-bottom: 8px; }
 .row { display: flex; gap: 8px; }
 .row input { flex: 1; min-width: 0; }
