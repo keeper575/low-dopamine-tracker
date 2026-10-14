@@ -2,8 +2,8 @@
 
 A small weekly tracker for healthy, low-dopamine activities, such as reading a Kindle for 2 hours a week, reading 50 pages, or walking 10 km.
 
-- Add a weekly goal with a target and a unit (hours, minutes, pages, times, km).
-- Log progress through the week and watch the bar fill.
+- Add a weekly goal with a number and any unit you like: 2 hours, 50 pages, 5 sudokus.
+- Log progress through the week: **Add** puts an amount on top of the week's total, **Set total** replaces it (use 0 to clear the week).
 - Edit a goal to change its name, target or unit. The new target applies to every week, past weeks included.
 - Add one-off tasks to a week's checklist and tick them off.
 - Move between weeks to see past ones. Each week starts on Monday.

@@ -66,7 +66,8 @@ button[type="submit"], .primary { background: var(--accent); border-color: var(-
 
 .log { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
 .demo-actions { display: flex; gap: 12px; }
-.log input { width: 110px; min-width: 0; }
+.log input { flex: 1; width: 0; min-width: 70px; max-width: 120px; }
+.log .set { white-space: nowrap; }
 .log .remove { margin-left: auto; }
 
 .edit-form > input { width: 100%; margin-bottom: 8px; }
@@ -81,6 +82,9 @@ button[type="submit"], .primary { background: var(--accent); border-color: var(-
 .task.done span { color: var(--muted); text-decoration: line-through; }
 
 .empty { color: var(--muted); text-align: center; }
+
+.add-toggle { width: 100%; border-style: dashed; color: var(--muted); padding: 12px; }
+.hint { margin: 8px 0 0; color: var(--muted); font-size: 0.85rem; }
 
 .add-form { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 .add-form > input { width: 100%; margin-bottom: 8px; }

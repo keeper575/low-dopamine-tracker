@@ -33,7 +33,7 @@
     <section id="summary" class="summary"></section>
 
     <ul id="activity-list" class="activity-list"></ul>
-    <p id="empty" class="empty" hidden>No activities yet. Add one below. For example: “Read Kindle, 2 hours”.</p>
+    <p id="empty" class="empty" hidden>No goals yet. Add one below. For example: “Read Kindle, 2 hours”.</p>
 
     <section class="tasks">
       <h2>Tasks for this week</h2>
@@ -44,20 +44,21 @@
       </form>
     </section>
 
-    <form id="add-form" class="add-form">
+    <button id="show-add" class="add-toggle">+ Add a weekly goal</button>
+    <form id="add-form" class="add-form" hidden>
       <h2>Add a weekly goal</h2>
       <input id="name" placeholder="Activity (e.g. Read a book)" required maxlength="60">
       <div class="row">
         <input id="target" type="number" min="0.25" step="any" placeholder="Target" required>
-        <select id="unit">
-          <option value="hours">hours</option>
-          <option value="minutes">minutes</option>
-          <option value="pages">pages</option>
-          <option value="times">times</option>
-          <option value="km">km</option>
-        </select>
+        <input id="unit" placeholder="Unit" required maxlength="20" list="unit-suggestions">
+        <datalist id="unit-suggestions">
+          <option value="hours"><option value="minutes"><option value="pages">
+          <option value="times"><option value="km"><option value="sessions">
+        </datalist>
         <button type="submit">Add</button>
+        <button type="button" id="hide-add">Cancel</button>
       </div>
+      <p class="hint">Any unit works: 2 hours, 50 pages, 5 sudokus.</p>
     </form>
 
     <footer>

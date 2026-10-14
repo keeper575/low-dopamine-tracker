@@ -31,8 +31,9 @@ function demoData() {
       { id: 'kindle', name: 'Read Kindle', target: 2, unit: 'hours' },
       { id: 'pages', name: 'Read a book', target: 50, unit: 'pages' },
       { id: 'walk', name: 'Walk outside', target: 10, unit: 'km' },
+      { id: 'sudoku', name: 'Sudoku', target: 5, unit: 'puzzles' },
     ],
-    logs: { [week]: { kindle: 1.5, pages: 50, walk: 4 }, [lastWeek]: { kindle: 2, pages: 30, walk: 12 } },
+    logs: { [week]: { kindle: 1.5, pages: 50, walk: 4, sudoku: 2 }, [lastWeek]: { kindle: 2, pages: 30, walk: 12 } },
     tasks: { [week]: [{ id: 't1', text: 'Clean the bookshelf', done: true }, { id: 't2', text: 'Call grandma', done: false }] },
   });
 }
@@ -80,12 +81,7 @@ function setAmount(activityId, amount) {
   state.logs[key] ??= {};
   state.logs[key][activityId] = Math.max(0, Math.round(amount * 100) / 100);
   save();
-  if (DEMO) {
-  $('demo-banner').hidden = false;
-  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
-}
-
-render();
+  render();
 }
 
 // --- tasks ---------------------------------------------------------------
@@ -100,12 +96,7 @@ function updateTasks(fn) {
   if (tasks.length) state.tasks[key] = tasks;
   else delete state.tasks[key];
   save();
-  if (DEMO) {
-  $('demo-banner').hidden = false;
-  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
-}
-
-render();
+  render();
 }
 
 // --- render --------------------------------------------------------------
@@ -156,25 +147,32 @@ function renderActivity(activity) {
   li.innerHTML = `
     <div class="activity-head">
       <span class="activity-name"></span>
-      <span class="activity-count">${amount} / ${activity.target} ${activity.unit}</span>
+      <span class="activity-count"></span>
     </div>
     <div class="bar"><span style="width:${pct}%"></span></div>
     <form class="log">
-      <input type="number" step="any" min="0" placeholder="+ ${activity.unit}" aria-label="Amount to add">
-      <button type="submit">Log</button>
-      <button type="button" class="link undo">Reset</button>
+      <input type="number" step="any" min="0" aria-label="Amount">
+      <button type="submit">Add</button>
+      <button type="button" class="set">Set total</button>
       <button type="button" class="link edit">Edit</button>
       <button type="button" class="link remove">Remove</button>
     </form>`;
   li.querySelector('.activity-name').textContent = activity.name;
+  li.querySelector('.activity-count').textContent = `${amount} / ${activity.target} ${activity.unit}`;
 
+  // "Add" logs a session on top of the week's total; "Set total" overwrites it (0 clears the week).
   const form = li.querySelector('form');
+  const input = form.querySelector('input');
+  input.placeholder = '0';
+  const value = () => parseFloat(input.value);
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const value = parseFloat(form.querySelector('input').value);
-    if (!Number.isNaN(value)) setAmount(activity.id, amount + value);
+    if (!Number.isNaN(value())) setAmount(activity.id, amount + value());
   });
-  li.querySelector('.undo').addEventListener('click', () => setAmount(activity.id, 0));
+  li.querySelector('.set').addEventListener('click', () => {
+    if (!Number.isNaN(value())) setAmount(activity.id, value());
+    else input.focus();
+  });
   li.querySelector('.edit').addEventListener('click', () => { editingId = activity.id; render(); });
   li.querySelector('.remove').addEventListener('click', () => removeActivity(activity));
   return li;
@@ -188,7 +186,7 @@ function renderEditor(activity) {
       <input name="name" required maxlength="60" aria-label="Activity name">
       <div class="row">
         <input name="target" type="number" min="0.25" step="any" required aria-label="Weekly target">
-        <select name="unit" aria-label="Unit">${$('unit').innerHTML}</select>
+        <input name="unit" required maxlength="20" list="unit-suggestions" aria-label="Unit">
         <button type="submit">Save</button>
         <button type="button" class="cancel">Cancel</button>
       </div>
@@ -202,16 +200,11 @@ function renderEditor(activity) {
     Object.assign(activity, {
       name: form.elements.name.value.trim(),
       target: parseFloat(form.elements.target.value),
-      unit: form.elements.unit.value,
+      unit: form.elements.unit.value.trim(),
     });
     editingId = null;
     save();
-    if (DEMO) {
-  $('demo-banner').hidden = false;
-  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
-}
-
-render();
+    render();
   });
   li.querySelector('.cancel').addEventListener('click', () => { editingId = null; render(); });
   queueMicrotask(() => form.elements.target.focus());
@@ -225,12 +218,7 @@ function removeActivity(activity) {
   state.activities = state.activities.filter((a) => a.id !== activity.id);
   for (const week of Object.values(state.logs)) delete week[activity.id];
   save();
-  if (DEMO) {
-  $('demo-banner').hidden = false;
-  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
-}
-
-render();
+  render();
 }
 
 $('add-form').addEventListener('submit', (e) => {
@@ -239,17 +227,22 @@ $('add-form').addEventListener('submit', (e) => {
     id: crypto.randomUUID(),
     name: $('name').value.trim(),
     target: parseFloat($('target').value),
-    unit: $('unit').value,
+    unit: $('unit').value.trim(),
   });
   save();
   e.target.reset();
-  if (DEMO) {
-  $('demo-banner').hidden = false;
-  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+  toggleAddForm(false);
+  render();
+});
+
+function toggleAddForm(open) {
+  $('add-form').hidden = !open;
+  $('show-add').hidden = open;
+  if (open) $('name').focus();
 }
 
-render();
-});
+$('show-add').addEventListener('click', () => toggleAddForm(true));
+$('hide-add').addEventListener('click', () => { $('add-form').reset(); toggleAddForm(false); });
 
 $('task-form').addEventListener('submit', (e) => {
   e.preventDefault();
@@ -281,12 +274,7 @@ $('import').addEventListener('change', async (e) => {
     if (!confirm('Replace current data with the imported file?')) return;
     state = normalize(data);
     save();
-    if (DEMO) {
-  $('demo-banner').hidden = false;
-  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
-}
-
-render();
+    render();
   } catch {
     alert('That file does not look like a Slow Week export.');
   } finally {
