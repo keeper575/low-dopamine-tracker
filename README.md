@@ -27,6 +27,10 @@ Open `index.html` in a browser, or serve the folder:
 python3 -m http.server 8000
 ```
 
+## Try it safely (demo mode)
+
+Add `?demo` to the URL, or click **Try demo** at the bottom of the page. Demo mode loads sample goals and tasks into separate storage, so your real data is never touched. Use **Reset demo** to start over, or **Exit demo** to go back.
+
 ## Deploy (GitHub Pages)
 
 1. Push this repo to GitHub.

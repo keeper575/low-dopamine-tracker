@@ -5,12 +5,14 @@
 //   tasks: { "YYYY-MM-DD" (week's Monday): [{ id, text, done }] },
 // }
 
-const STORAGE_KEY = 'slow-week-v1';
+// ?demo runs on separate storage seeded with sample data, so trying things out never touches real data.
+const DEMO = new URLSearchParams(location.search).has('demo');
+const STORAGE_KEY = DEMO ? 'slow-week-demo' : 'slow-week-v1';
 
 const $ = (id) => document.getElementById(id);
 
-let state = load();
 let weekStart = mondayOf(new Date());
+let state = load();
 let editingId = null;
 
 function load() {
@@ -18,7 +20,21 @@ function load() {
     const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
     if (data && Array.isArray(data.activities)) return normalize(data);
   } catch {}
-  return normalize({ activities: [] });
+  return DEMO ? demoData() : normalize({ activities: [] });
+}
+
+function demoData() {
+  const week = weekKey(mondayOf(new Date()));
+  const lastWeek = weekKey(addDays(mondayOf(new Date()), -7));
+  return normalize({
+    activities: [
+      { id: 'kindle', name: 'Read Kindle', target: 2, unit: 'hours' },
+      { id: 'pages', name: 'Read a book', target: 50, unit: 'pages' },
+      { id: 'walk', name: 'Walk outside', target: 10, unit: 'km' },
+    ],
+    logs: { [week]: { kindle: 1.5, pages: 50, walk: 4 }, [lastWeek]: { kindle: 2, pages: 30, walk: 12 } },
+    tasks: { [week]: [{ id: 't1', text: 'Clean the bookshelf', done: true }, { id: 't2', text: 'Call grandma', done: false }] },
+  });
 }
 
 function normalize(data) {
@@ -64,7 +80,12 @@ function setAmount(activityId, amount) {
   state.logs[key] ??= {};
   state.logs[key][activityId] = Math.max(0, Math.round(amount * 100) / 100);
   save();
-  render();
+  if (DEMO) {
+  $('demo-banner').hidden = false;
+  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+}
+
+render();
 }
 
 // --- tasks ---------------------------------------------------------------
@@ -79,7 +100,12 @@ function updateTasks(fn) {
   if (tasks.length) state.tasks[key] = tasks;
   else delete state.tasks[key];
   save();
-  render();
+  if (DEMO) {
+  $('demo-banner').hidden = false;
+  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+}
+
+render();
 }
 
 // --- render --------------------------------------------------------------
@@ -180,7 +206,12 @@ function renderEditor(activity) {
     });
     editingId = null;
     save();
-    render();
+    if (DEMO) {
+  $('demo-banner').hidden = false;
+  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+}
+
+render();
   });
   li.querySelector('.cancel').addEventListener('click', () => { editingId = null; render(); });
   queueMicrotask(() => form.elements.target.focus());
@@ -194,7 +225,12 @@ function removeActivity(activity) {
   state.activities = state.activities.filter((a) => a.id !== activity.id);
   for (const week of Object.values(state.logs)) delete week[activity.id];
   save();
-  render();
+  if (DEMO) {
+  $('demo-banner').hidden = false;
+  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+}
+
+render();
 }
 
 $('add-form').addEventListener('submit', (e) => {
@@ -207,7 +243,12 @@ $('add-form').addEventListener('submit', (e) => {
   });
   save();
   e.target.reset();
-  render();
+  if (DEMO) {
+  $('demo-banner').hidden = false;
+  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+}
+
+render();
 });
 
 $('task-form').addEventListener('submit', (e) => {
@@ -240,12 +281,22 @@ $('import').addEventListener('change', async (e) => {
     if (!confirm('Replace current data with the imported file?')) return;
     state = normalize(data);
     save();
-    render();
+    if (DEMO) {
+  $('demo-banner').hidden = false;
+  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+}
+
+render();
   } catch {
     alert('That file does not look like a Slow Week export.');
   } finally {
     e.target.value = '';
   }
 });
+
+if (DEMO) {
+  $('demo-banner').hidden = false;
+  $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
+}
 
 render();

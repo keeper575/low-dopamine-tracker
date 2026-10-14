@@ -9,6 +9,13 @@
 </head>
 <body>
   <main>
+    <p id="demo-banner" class="demo-banner" hidden>
+      Demo mode: sample data, kept apart from your real data.
+      <span class="demo-actions">
+        <button id="demo-reset" class="link">Reset demo</button>
+        <a class="link" href="./">Exit demo</a>
+      </span>
+    </p>
     <header>
       <h1>Slow Week</h1>
       <p class="sub">Healthy, low-dopamine goals, one week at a time.</p>
@@ -56,6 +63,7 @@
     <footer>
       <button id="export" class="link">Export data</button>
       <label class="link">Import data<input id="import" type="file" accept="application/json" hidden></label>
+      <a class="link" href="?demo">Try demo</a>
       <span class="muted">Saved in this browser only.</span>
     </footer>
   </main>

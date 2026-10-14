@@ -21,6 +21,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -63,8 +64,9 @@ button[type="submit"], .primary { background: var(--accent); border-color: var(-
 .bar { height: 8px; background: var(--track); border-radius: 4px; overflow: hidden; margin: 10px 0; }
 .bar > span { display: block; height: 100%; background: var(--accent); transition: width 0.2s; }
 
-.log { display: flex; gap: 8px; align-items: center; }
-.log input { width: 90px; }
+.log { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.demo-actions { display: flex; gap: 12px; }
+.log input { width: 110px; min-width: 0; }
 .log .remove { margin-left: auto; }
 
 .edit-form > input { width: 100%; margin-bottom: 8px; }
@@ -86,3 +88,6 @@ button[type="submit"], .primary { background: var(--accent); border-color: var(-
 .row input { flex: 1; min-width: 0; }
 
 footer { margin-top: 24px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; font-size: 0.875rem; }
+
+.demo-banner { background: var(--track); border-radius: 8px; padding: 8px 12px; margin: 0 0 16px; font-size: 0.875rem; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.demo-actions { display: flex; gap: 12px; }
