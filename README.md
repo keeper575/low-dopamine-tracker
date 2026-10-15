@@ -15,9 +15,12 @@ A small weekly tracker for healthy, low-dopamine activities, such as reading a K
 Plain HTML, CSS and JavaScript. There are no dependencies and no build step. Data is saved in the browser's `localStorage`.
 
 ```
-index.html   page markup
-style.css    styles, including light and dark mode
-app.js       state, rendering and events
+index.html            page markup
+style.css             styles, including light and dark mode
+app.js                state, rendering and events
+sw.js                 service worker for offline use
+manifest.webmanifest  install details (name, icons, colours)
+icons/                app icons
 ```
 
 ## Run locally
@@ -28,13 +31,22 @@ Open `index.html` in a browser, or serve the folder:
 python3 -m http.server 8000
 ```
 
+## Install on your phone (works offline)
+
+1. Open https://keeper575.github.io/low-dopamine-tracker/ on your phone.
+   - **iPhone:** use Safari, tap the Share button, then **Add to Home Screen**.
+   - **Android:** use Chrome, tap the ⋮ menu, then **Install app** (or **Add to Home screen**).
+2. Open Slow Week from its new icon. It runs full screen, and works without internet after the first visit.
+
+Data lives on the phone only. On iPhone the home-screen app keeps its own storage, separate from Safari: to bring over data you entered in Safari, use **Export data** there and **Import data** in the app. Export now and then as a backup.
+
 ## Try it safely (demo mode)
 
 Add `?demo` to the URL, or click **Try demo** at the bottom of the page. Demo mode loads sample goals and tasks into separate storage, so your real data is never touched. Use **Reset demo** to start over, or **Exit demo** to go back.
 
 ## Deploy (GitHub Pages)
 
-When you change `style.css` or `app.js`, bump the `?v=` number on their links in `index.html`. Browsers cache these files for a few minutes, and the new number makes them fetch the update instead of mixing an old file with a new page.
+When you change `style.css` or `app.js`, bump the `?v=` number on their links in `index.html`, and `VERSION` in `sw.js` to match. Browsers cache these files for a few minutes, and the new number makes them fetch the update instead of mixing an old file with a new page.
 
 1. Push this repo to GitHub.
 2. Go to **Settings → Pages**, set the source to **Deploy from a branch**, then choose `main` and `/ (root)`.

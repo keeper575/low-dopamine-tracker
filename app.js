@@ -337,6 +337,11 @@ $('import').addEventListener('change', async (e) => {
   }
 });
 
+// Lets the app install to a phone's home screen and work offline (needs http(s), not file://).
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
 if (DEMO) {
   $('demo-banner').hidden = false;
   $('demo-reset').addEventListener('click', () => { state = demoData(); save(); render(); });
