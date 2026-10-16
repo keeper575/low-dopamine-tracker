@@ -1,6 +1,6 @@
 // Offline support. Network first, so an online visit always gets the latest files; the cache is
 // only used when the network fails. Keep VERSION in step with the ?v= numbers in index.html.
-const VERSION = 4;
+const VERSION = 5;
 const CACHE = `slow-week-${VERSION}`;
 const ASSETS = [
   './',

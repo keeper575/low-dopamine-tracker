@@ -1,7 +1,9 @@
 // Slow Week: all state lives in localStorage under one key.
 // Shape (weeks are keyed by their Monday, "YYYY-MM-DD"):
 // {
-//   activities: [{ id, name, target, unit, since }],  // since: first week the goal counts
+//   activities: [{ id, name, target, unit, since, source }],  // since: first week the goal counts;
+//                                                             // source: 'kindle' | 'audible' to auto-fill
+//   lastSync: { week, minutes: { kindle, audible }, at },     // last numbers from the Android helper
 //   logs:  { [week]: { [activityId]: amount } },
 //   tasks: [{ id, text, week, doneWeek }],            // week added; doneWeek is null until ticked
 // }
@@ -15,6 +17,10 @@ const DEMO = new URLSearchParams(location.search).has('demo');
 const STORAGE_KEY = DEMO ? 'slow-week-demo' : 'slow-week-v1';
 
 const $ = (id) => document.getElementById(id);
+
+// Goals that can be filled in by the Android helper app (android/). It opens
+// ?sync=1&week=YYYY-MM-DD&kindle=<minutes>&audible=<minutes>.
+const SOURCES = { kindle: 'Kindle', audible: 'Audible' };
 
 let weekStart = mondayOf(new Date());
 let state = load();
@@ -33,7 +39,7 @@ function demoData() {
   const lastWeek = weekKey(addDays(mondayOf(new Date()), -7));
   return normalize({
     activities: [
-      { id: 'kindle', name: 'Read Kindle', target: 2, unit: 'hours', since: lastWeek },
+      { id: 'kindle', name: 'Read Kindle', target: 2, unit: 'hours', since: lastWeek, source: 'kindle' },
       { id: 'pages', name: 'Read a book', target: 50, unit: 'pages', since: lastWeek },
       { id: 'walk', name: 'Walk outside', target: 10, unit: 'km', since: lastWeek },
       { id: 'sudoku', name: 'Sudoku', target: 5, unit: 'puzzles', since: week },
@@ -61,7 +67,7 @@ function normalize(data) {
     tasks = Object.entries(tasks).flatMap(([week, list]) =>
       list.map((t) => ({ id: t.id, text: t.text, week, doneWeek: t.done ? week : null })));
   }
-  return { activities, logs, tasks };
+  return { activities, logs, tasks, lastSync: data.lastSync || null };
 }
 
 function save() {
@@ -127,6 +133,63 @@ function setAmount(activityId, amount) {
   state.logs[key][activityId] = Math.max(0, Math.round(amount * 100) / 100);
   save();
   render();
+}
+
+// --- sync from the Android helper ----------------------------------------
+
+// Minutes convert into goals measured in minutes or hours; other units can't be auto-filled.
+function minutesFactor(unit) {
+  if (/^(m|mins?|minutes?)$/i.test(unit.trim())) return 1;
+  if (/^(h|hrs?|hours?)$/i.test(unit.trim())) return 1 / 60;
+  return null;
+}
+
+function readSync() {
+  const params = new URLSearchParams(location.search);
+  const week = params.get('week') || '';
+  if (!params.has('sync') || !/^\d{4}-\d{2}-\d{2}$/.test(week)) return null;
+  const minutes = {};
+  for (const key of Object.keys(SOURCES)) {
+    const n = Number(params.get(key));
+    if (params.has(key) && Number.isFinite(n) && n >= 0) minutes[key] = n;
+  }
+  return { week, minutes, at: new Date().toISOString() };
+}
+
+// Sets each linked goal's total for the synced week. Returns the goals it filled.
+function applySync(sync) {
+  const filled = [];
+  for (const a of state.activities) {
+    const minutes = a.source ? sync.minutes[a.source] : undefined;
+    const factor = minutesFactor(a.unit);
+    if (minutes == null || factor == null) continue;
+    state.logs[sync.week] ??= {};
+    state.logs[sync.week][a.id] = Math.round(minutes * factor * 100) / 100;
+    filled.push(a);
+  }
+  return filled;
+}
+
+function formatMinutes(total) {
+  const h = Math.floor(total / 60), m = Math.round(total % 60);
+  return h ? (m ? `${h} h ${m} min` : `${h} h`) : `${m} min`;
+}
+
+function showNotice(text) {
+  $('notice-text').textContent = text;
+  $('notice').hidden = false;
+}
+
+function sourceOptions(selected) {
+  return [['', 'Manual only'], ...Object.entries(SOURCES).map(([k, v]) => [k, `${v} (Android helper)`])]
+    .map(([k, v]) => `<option value="${k}"${k === (selected || '') ? ' selected' : ''}>${v}</option>`).join('');
+}
+
+// Shown on the select itself, so the browser points at it when the form is submitted.
+function checkSource(select, unit) {
+  select.setCustomValidity(select.value && minutesFactor(unit) == null
+    ? 'Auto-fill gives minutes, so set the unit to minutes or hours.' : '');
+  return select.reportValidity();
 }
 
 // --- tasks ---------------------------------------------------------------
@@ -197,6 +260,7 @@ function renderActivity(activity) {
       <span class="activity-count"></span>
     </div>
     <div class="carry" hidden></div>
+    <div class="auto" hidden></div>
     <div class="bar"><span style="width:${pct}%"></span></div>
     <form class="log">
       <input type="number" step="any" min="0" aria-label="Amount">
@@ -211,6 +275,11 @@ function renderActivity(activity) {
     const note = li.querySelector('.carry');
     note.hidden = false;
     note.textContent = `${activity.target} this week + ${carried} carried over`;
+  }
+  if (activity.source) {
+    const auto = li.querySelector('.auto');
+    auto.hidden = false;
+    auto.textContent = `Auto-filled from ${SOURCES[activity.source]} by the Android helper`;
   }
 
   // "Add" logs a session on top of the week's total; "Set total" overwrites it (0 clears the week).
@@ -243,18 +312,23 @@ function renderEditor(activity) {
         <button type="submit">Save</button>
         <button type="button" class="cancel">Cancel</button>
       </div>
+      <label class="source-field">Auto-fill from <select name="source">${sourceOptions(activity.source)}</select></label>
     </form>`;
   const form = li.querySelector('form');
   form.elements.name.value = activity.name;
   form.elements.target.value = activity.target;
   form.elements.unit.value = activity.unit;
+  form.addEventListener('input', () => form.elements.source.setCustomValidity(''));
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (!checkSource(form.elements.source, form.elements.unit.value)) return;
     Object.assign(activity, {
       name: form.elements.name.value.trim(),
       target: parseFloat(form.elements.target.value),
       unit: form.elements.unit.value.trim(),
+      source: form.elements.source.value || undefined,
     });
+    if (activity.source && state.lastSync) applySync(state.lastSync);
     editingId = null;
     save();
     render();
@@ -274,15 +348,21 @@ function removeActivity(activity) {
   render();
 }
 
+$('source').innerHTML = sourceOptions('');
+$('add-form').addEventListener('input', () => $('source').setCustomValidity(''));
+
 $('add-form').addEventListener('submit', (e) => {
   e.preventDefault();
+  if (!checkSource($('source'), $('unit').value)) return;
   state.activities.push({
     id: crypto.randomUUID(),
     name: $('name').value.trim(),
     target: parseFloat($('target').value),
     unit: $('unit').value.trim(),
     since: weekKey(weekStart),
+    source: $('source').value || undefined,
   });
+  if (state.lastSync) applySync(state.lastSync);
   save();
   e.target.reset();
   toggleAddForm(false);
@@ -340,6 +420,27 @@ $('import').addEventListener('change', async (e) => {
 // Lets the app install to a phone's home screen and work offline (needs http(s), not file://).
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+$('notice-close').addEventListener('click', () => { $('notice').hidden = true; });
+
+// Numbers sent by the Android helper: fill linked goals, then drop the query so a reload doesn't repeat it.
+const incoming = DEMO ? null : readSync();
+if (incoming) {
+  state.lastSync = incoming;
+  const filled = applySync(incoming);
+  save();
+  history.replaceState(null, '', location.pathname);
+  weekStart = parseKey(incoming.week);
+  const got = Object.entries(incoming.minutes).map(([k, m]) => `${SOURCES[k]} ${formatMinutes(m)}`).join(', ');
+  const unfit = state.activities.filter((a) => a.source && minutesFactor(a.unit) == null);
+  showNotice([
+    `Synced from the helper: ${got || 'nothing to report'}.`,
+    filled.length
+      ? `Filled in ${filled.map((a) => a.name).join(', ')}.`
+      : 'No goal is set to auto-fill yet: edit a goal and choose "Auto-fill from".',
+    ...unfit.map((a) => `${a.name} can't be filled: its unit needs to be minutes or hours.`),
+  ].join(' '));
 }
 
 if (DEMO) {

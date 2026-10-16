@@ -21,6 +21,7 @@ app.js                state, rendering and events
 sw.js                 service worker for offline use
 manifest.webmanifest  install details (name, icons, colours)
 icons/                app icons
+android/              Android helper app (Kotlin), built by .github/workflows/android-helper.yml
 ```
 
 ## Run locally
@@ -39,6 +40,28 @@ python3 -m http.server 8000
 2. Open Slow Week from its new icon. It runs full screen, and works without internet after the first visit.
 
 Data lives on the phone only. On iPhone the home-screen app keeps its own storage, separate from Safari: to bring over data you entered in Safari, use **Export data** there and **Import data** in the app. Export now and then as a backup.
+
+## Android helper: Kindle and Audible minutes
+
+Slow Week can't see inside other apps, so a small Android companion app (in `android/`) reads how long you used Kindle and Audible this week and sends the minutes over.
+
+**Install**
+1. On your phone, open the [latest helper release](https://github.com/keeper575/low-dopamine-tracker/releases/tag/helper) and download `slow-week-helper.apk`.
+2. Open the file. Android asks you to allow installs from your browser or file manager once; allow it, then install.
+3. Open **Slow Week helper**, tap **Grant usage access**, switch it on for Slow Week helper, and come back.
+
+**Link your goals**
+In Slow Week, edit a goal (or add one) and set **Auto-fill from** to Kindle or Audible. The goal's unit must be minutes or hours.
+
+**Sync**
+Open the helper and tap **Send to Slow Week**. It opens Slow Week with this week's minutes and replaces the totals of linked goals for that week. Manual goals are never touched.
+
+**What is counted**
+- Kindle: time the Kindle app is open on screen. Leaving it open and walking away still counts.
+- Audible: time it is playing, including with the screen off, plus time it is on screen.
+- Pages can't be read from either app, so page goals stay manual.
+
+The helper reads only Android's record of when apps were in use, sends nothing anywhere except the link it opens, and needs Android 10 or later. It is signed with a debug key kept in the repo (`android/debug.keystore`), so any build of it installs over the previous one; only install the APK from this repo's releases.
 
 ## Try it safely (demo mode)
 

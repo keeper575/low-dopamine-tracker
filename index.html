@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Slow Week</title>
   <meta name="description" content="Weekly tracker for healthy, low-dopamine activities.">
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -16,6 +16,10 @@
 </head>
 <body>
   <main>
+    <p id="notice" class="notice" hidden>
+      <span id="notice-text"></span>
+      <button id="notice-close" class="link">Dismiss</button>
+    </p>
     <p id="demo-banner" class="demo-banner" hidden>
       Demo mode: sample data, kept apart from your real data.
       <span class="demo-actions">
@@ -65,7 +69,8 @@
           <button type="submit">Add</button>
           <button type="button" id="hide-add">Cancel</button>
         </div>
-        <p class="hint">Any unit works: 2 hours, 50 pages, 5 sudokus.</p>
+        <label class="source-field">Auto-fill from <select id="source"></select></label>
+        <p class="hint">Any unit works: 2 hours, 50 pages, 5 sudokus. Auto-fill needs minutes or hours.</p>
       </form>
     </details>
 
@@ -77,6 +82,6 @@
     </footer>
   </main>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>
